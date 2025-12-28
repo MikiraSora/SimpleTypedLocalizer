@@ -8,6 +8,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        /*
         var r = MyLang.Notifiable.MyValue;
         r.PropertyChanged += (s, e) =>
         {
@@ -18,5 +19,6 @@ public class Program
         Console.WriteLine($"MyName: {MyLang.MyName}");
         LocalizerManager.CurrentDefaultCultureInfo = CultureInfo.GetCultureInfo("zh-CN");
         Console.WriteLine($"MyName: {MyLang.MyName}");
+        */
     }
 }

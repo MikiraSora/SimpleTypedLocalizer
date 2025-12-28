@@ -31,15 +31,13 @@ public static class ImportTaskRunner
 
             //var additionalTexts = EnumerateFiles(files, task.Path, context.ProjectFolder);
             var additionalTexts = FilterFiles(files, task.Path);
-            foreach (var additionalText in additionalTexts)
+            foreach (var (additionalText, langCode) in additionalTexts)
             {
                 if (cancellationToken.IsCancellationRequested)
                     return default;
                 var filePath = additionalText.Path;
 
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
-                if (!TryParseLangCodeFromFileName(fileName, out var langCode))
-                    continue;
 
                 if (!TryParseLangFile(additionalText, out var langMap) || langMap is null)
                 {
@@ -48,9 +46,11 @@ public static class ImportTaskRunner
                     continue;
                 }
 
+                var isDefaultLangCode = string.IsNullOrWhiteSpace(langCode);
+
                 //更新可本地化的文本名称
                 foreach (var pair in langMap)
-                    if (!exportLocalizedTextNames.ContainsKey(pair.Key))
+                    if (isDefaultLangCode || !exportLocalizedTextNames.ContainsKey(pair.Key))
                         exportLocalizedTextNames[pair.Key] = pair.Value;
 
                 if (isImportAtCompileTime)
@@ -169,7 +169,7 @@ public static class ImportTaskRunner
             return true;
         }
 
-        langCode = default;
+        langCode = string.Empty;
         /* 钦定符合标准的文件名都是这种:
          * myLang.zh-cn
          * daswe.zh
@@ -203,7 +203,8 @@ public static class ImportTaskRunner
         return false;
     }
 
-    private static IEnumerable<AdditionalText> FilterFiles(ImmutableArray<AdditionalText> files, string pathPattern)
+    private static IEnumerable<(AdditionalText, string langCode)> FilterFiles(ImmutableArray<AdditionalText> files,
+        string pathPattern)
     {
         /* 比如 pathPattern = "Assets/Languages/lang.resx" baseFolder = C:/AA/
          * 那么可以匹配以下 AdditionalText 列表对象:
@@ -217,13 +218,16 @@ public static class ImportTaskRunner
             return path?.Replace('\\', '/');
         }
 
-        if (string.IsNullOrWhiteSpace(pathPattern)) yield break;
+        if (string.IsNullOrWhiteSpace(pathPattern))
+            return [];
 
         // 1. 统一分隔符并获取关键信息
         var normalizedPattern = path(pathPattern)?.Trim('/');
         var directoryPart = path(Path.GetDirectoryName(normalizedPattern)) ?? "";
         var fileNameNoExt = Path.GetFileNameWithoutExtension(normalizedPattern);
         var extension = Path.GetExtension(normalizedPattern);
+
+        var result = new List<(AdditionalText, string langCode)>();
 
         foreach (var file in files)
         {
@@ -241,8 +245,20 @@ public static class ImportTaskRunner
                     currentFileName.Length - fileNameNoExt.Length - extension.Length);
 
                 if (string.IsNullOrEmpty(middlePart) || middlePart.StartsWith("."))
-                    yield return file;
+                    if (TryParseLangCodeFromFileName(Path.GetFileNameWithoutExtension(file.Path), out var langCode))
+                        result.Add((file, langCode));
             }
         }
+
+        int rank(string langCode)
+        {
+            if (string.IsNullOrWhiteSpace(langCode))
+                return 0;
+            return langCode.Contains("-") ? 1 : 2;
+        }
+
+        result.Sort((a, b) => rank(b.langCode) - rank(a.langCode));
+
+        return result;
     }
 }
