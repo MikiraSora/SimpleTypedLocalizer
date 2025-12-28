@@ -139,6 +139,12 @@ public static class ImportTaskSourceWriter
             .AppendLine();
     }
 
+    private static string EscapeLineBreaks(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+        return input.Replace("\r\n", "\\n").Replace("\n", "\\n");
+    }
+
     /// <summary>
     ///     123123
     /// </summary>
@@ -153,7 +159,7 @@ public static class ImportTaskSourceWriter
 
             var textName = pair.Key;
 
-            var textDefaultValue = pair.Value;
+            var textDefaultValue = EscapeLineBreaks(pair.Value);
 
             codeBuilder.AppendLine("/// <summary>");
             codeBuilder.AppendLine(
