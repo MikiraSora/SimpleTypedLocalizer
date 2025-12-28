@@ -72,7 +72,7 @@ public static class ImportTaskSourceWriter
             .AppendLine("});")
             .AppendLine();
 
-        GenerateLocalizedTextProperties(result, codeBuilder, false);
+        GenerateLocalizedTextProperties(context, result, codeBuilder, false);
         codeBuilder.AppendLine();
 
         codeBuilder
@@ -87,7 +87,7 @@ public static class ImportTaskSourceWriter
             .AppendLine("{")
             .IncrementIndent();
 
-        GenerateLocalizedTextProperties(result, codeBuilder, true);
+        GenerateLocalizedTextProperties(context, result, codeBuilder, true);
 
         codeBuilder
             .DecrementIndent()
@@ -139,15 +139,38 @@ public static class ImportTaskSourceWriter
             .AppendLine();
     }
 
-    private static void GenerateLocalizedTextProperties(RunTaskContextResult result,
+    /// <summary>
+    ///     123123
+    /// </summary>
+    private static void GenerateLocalizedTextProperties(LocalizeImportTaskContext context, RunTaskContextResult result,
         IndentedStringBuilder codeBuilder, bool isGenerateTextSource)
     {
-        foreach (var textName in result.ExportLocalizedTextNames)
+        foreach (var pair in result.ExportLocalizedTextNames)
         {
             var typeName = isGenerateTextSource ? "ILocalizedTextSource" : "string";
             var methodName = isGenerateTextSource ? "GetLocalizedTextSource" : "GetLocalizedText";
             var isStatic = isGenerateTextSource ? "" : "static ";
 
+            var textName = pair.Key;
+
+            var textDefaultValue = pair.Value;
+
+            codeBuilder.AppendLine("/// <summary>");
+            codeBuilder.AppendLine(
+                $"/// get localized text {(isGenerateTextSource ? "source " : "")}named <c>{textName}</c>, default localized value: <c>{textDefaultValue}</c><br/>");
+            if (isGenerateTextSource)
+            {
+                codeBuilder.AppendLine(
+                    "/// it's a text source which implement INotifyPropertyChanged and design for data binding");
+                codeBuilder.AppendLine(
+                    "/// <example><code>");
+                codeBuilder.AppendLine(
+                    $"/// &lt;TextBlock Text=\"{{Text, Source={{x:Static lang:{context.TargetClassName}.Notifiable.{textName}}}}}\"/&gt;");
+                codeBuilder.AppendLine(
+                    "/// </code></example>");
+            }
+
+            codeBuilder.AppendLine("/// </summary>");
             codeBuilder.AppendLine(
                 $"public {isStatic}{typeName} {textName} => manager.{methodName}(nameof({textName}));");
         }

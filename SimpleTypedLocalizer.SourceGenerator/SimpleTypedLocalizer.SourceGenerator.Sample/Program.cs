@@ -11,7 +11,7 @@ public class Program
         var r = MyLang.Notifiable.MyValue;
         r.PropertyChanged += (s, e) =>
         {
-            Console.WriteLine($"MyValue: {r.Text}");
+            Console.WriteLine($@"MyValue: {r.Text}");
         };
         
         LocalizerManager.CurrentDefaultCultureInfo = CultureInfo.InvariantCulture;

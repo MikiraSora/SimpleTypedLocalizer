@@ -18,7 +18,9 @@ public static class ImportTaskRunner
         ImmutableArray<AdditionalText> files,
         CancellationToken cancellationToken)
     {
-        var result = new RunTaskContextResult();
+        var providerDeclareSourceSentences = new HashSet<string>();
+        var exportLocalizedTextNames = new Dictionary<string, string>();
+        var staticBuildProviders = new HashSet<RunTaskContextResult.StaticBuildProvider>();
 
         foreach (var task in context.ImportTasks)
         {
@@ -42,26 +44,23 @@ public static class ImportTaskRunner
                 if (!TryParseLangFile(additionalText, out var langMap) || langMap is null)
                 {
                     //这里直接给注释说明加载失败
-                    result.ProviderDeclareSourceSentences.Add($"/*error: Can't import lang file: {filePath}*/");
+                    providerDeclareSourceSentences.Add($"/*error: Can't import lang file: {filePath}*/");
                     continue;
                 }
 
                 //更新可本地化的文本名称
-                foreach (var textName in langMap.Keys)
-                    result.ExportLocalizedTextNames.Add(textName);
+                foreach (var pair in langMap)
+                    if (!exportLocalizedTextNames.ContainsKey(pair.Key))
+                        exportLocalizedTextNames[pair.Key] = pair.Value;
 
                 if (isImportAtCompileTime)
                 {
-                    var buildProvider = new RunTaskContextResult.StaticBuildProvider
-                    {
-                        ProviderClassName = GenerateBuildProviderClassName(fileName),
-                        ProviderLangCode = langCode,
-                        LangMap = langMap
-                    };
+                    var buildProvider = new RunTaskContextResult.StaticBuildProvider(
+                        GenerateBuildProviderClassName(fileName), langCode, langMap.ToImmutableDictionary());
 
-                    result.ProviderDeclareSourceSentences.Add(
+                    providerDeclareSourceSentences.Add(
                         $"{buildProvider.ProviderClassName}.Instance /*import from: {filePath}*/");
-                    result.StaticBuildProviders.Add(buildProvider);
+                    staticBuildProviders.Add(buildProvider);
                 }
                 //todo 那么就是作为AvaloniaEmebbedResource在运行时加载咯,真有这个必要吗？
                 /*
@@ -71,8 +70,11 @@ public static class ImportTaskRunner
             }
         }
 
-        result.Success = result.ExportLocalizedTextNames.Count > 0;
-        return result;
+        return new RunTaskContextResult(
+            exportLocalizedTextNames.ToImmutableDictionary(),
+            providerDeclareSourceSentences.ToImmutableHashSet(),
+            staticBuildProviders.ToImmutableHashSet(),
+            exportLocalizedTextNames.Count > 0);
     }
 
     private static string GenerateBuildProviderClassName(string fileName)

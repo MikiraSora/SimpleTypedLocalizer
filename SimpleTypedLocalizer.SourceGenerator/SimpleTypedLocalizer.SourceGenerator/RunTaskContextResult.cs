@@ -1,20 +1,26 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Immutable;
 
 namespace SimpleTypedLocalizer.SourceGenerator;
 
-public class RunTaskContextResult
+public record RunTaskContextResult(
+    ImmutableDictionary<string, string> ExportLocalizedTextNames,
+    ImmutableHashSet<string> ProviderDeclareSourceSentences,
+    ImmutableHashSet<RunTaskContextResult.StaticBuildProvider> StaticBuildProviders,
+    bool Success)
 {
-    public bool Success { get; set; }
+    public bool Success { get; set; } = Success;
 
-    public HashSet<string> ExportLocalizedTextNames { get; } = new();
-    public HashSet<string> ProviderDeclareSourceSentences { get; } = new();
-    public HashSet<StaticBuildProvider> StaticBuildProviders { get; } = new();
+    public ImmutableDictionary<string, string> ExportLocalizedTextNames { get; } = ExportLocalizedTextNames;
+    public ImmutableHashSet<string> ProviderDeclareSourceSentences { get; } = ProviderDeclareSourceSentences;
+    public ImmutableHashSet<StaticBuildProvider> StaticBuildProviders { get; } = StaticBuildProviders;
 
-    public class StaticBuildProvider
+    public record StaticBuildProvider(
+        string ProviderClassName,
+        string ProviderLangCode,
+        ImmutableDictionary<string, string> LangMap)
     {
-        public string ProviderClassName { get; set; }
-        public string ProviderLangCode { get; set; }
-        public Dictionary<string, string> LangMap { get; set; } = new();
+        public string ProviderClassName { get; } = ProviderClassName;
+        public string ProviderLangCode { get; } = ProviderLangCode;
+        public ImmutableDictionary<string, string> LangMap { get; } = LangMap;
     }
 }
