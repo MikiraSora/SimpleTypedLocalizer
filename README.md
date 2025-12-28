@@ -1,4 +1,4 @@
-A simple localization library based on SourceGenerator like resX
+A simple localization library based on SourceGenerator like resX, I designed it and used it for my own AvaloniaBrowser project.
 
 Features:
 * support AOT and no reflection need
