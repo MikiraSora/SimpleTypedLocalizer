@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "DebugRoslynSourceGenerator": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "../SimpleTypedLocalizer.SourceGenerator.Sample/SimpleTypedLocalizer.SourceGenerator.Sample.csproj"
+    }
+  }
+}

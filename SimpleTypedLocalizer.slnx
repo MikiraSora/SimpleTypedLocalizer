@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SimpleTypedLocalizer.SourceGenerator/SimpleTypedLocalizer.SourceGenerator.Sample/SimpleTypedLocalizer.SourceGenerator.Sample.csproj" />
+  <Project Path="SimpleTypedLocalizer.SourceGenerator/SimpleTypedLocalizer.SourceGenerator/SimpleTypedLocalizer.SourceGenerator.csproj" />
+  <Project Path="SimpleTypedLocalizer/SimpleTypedLocalizer.csproj" />
+</Solution>

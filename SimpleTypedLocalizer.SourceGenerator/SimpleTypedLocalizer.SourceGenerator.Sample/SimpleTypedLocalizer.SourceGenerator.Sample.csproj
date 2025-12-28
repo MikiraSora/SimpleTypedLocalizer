@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <RootNamespace>SimpleTypedLocalizer.SourceGenerator.Sample</RootNamespace>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\SimpleTypedLocalizer\SimpleTypedLocalizer.csproj" />
+        <ProjectReference Include="..\SimpleTypedLocalizer.SourceGenerator\SimpleTypedLocalizer.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AdditionalFiles Include="Assets\Languages\*.json" />
+        <AdditionalFiles Include="Assets\Languages\*.resx" />
+    </ItemGroup>
+
+</Project>
