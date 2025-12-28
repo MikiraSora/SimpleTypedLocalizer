@@ -25,6 +25,7 @@ public class LocalizeGenerator : IIncrementalGenerator
                     ImportTasks.Length: > 0
                 }
             )
+            .Collect()
             .WithTrackingName("TaskContexts");
 
         var additionFiles = context.AdditionalTextsProvider
@@ -37,12 +38,13 @@ public class LocalizeGenerator : IIncrementalGenerator
                 .Select((pair, cancelToken) =>
                 {
                     var files = pair.Right;
-                    var taskContext = pair.Left!;
-
                     var resultList = new List<(LocalizeImportTaskContext, RunTaskContextResult?)>();
 
-                    var result = ImportTaskRunner.RunTaskContext(taskContext, files, cancelToken);
-                    resultList.Add((taskContext, result));
+                    foreach (var taskContext in pair.Left)
+                    {
+                        var result = ImportTaskRunner.RunTaskContext(taskContext!, files, cancelToken);
+                        resultList.Add((taskContext!, result));
+                    }
 
                     return resultList.ToImmutableArray();
                 });

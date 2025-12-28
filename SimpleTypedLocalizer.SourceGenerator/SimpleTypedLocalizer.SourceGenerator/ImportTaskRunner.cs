@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace SimpleTypedLocalizer.SourceGenerator;
@@ -116,8 +116,42 @@ public static class ImportTaskRunner
         if (additionalText.GetText() is not {Length: > 0} sourceText)
             return false;
         var content = sourceText.ToString();
-        langMap = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+
+        try
+        {
+            langMap = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+        }
+        catch (Exception e)
+        {
+            //try parse as .resx file
+            try
+            {
+                langMap = ParseResxContent(content);
+            }
+            catch (Exception e2)
+            {
+                return false;
+            }
+        }
+
         return langMap != null;
+    }
+
+    private static Dictionary<string, string> ParseResxContent(string xmlContent)
+    {
+        var dict = new Dictionary<string, string>();
+        var doc = XDocument.Parse(xmlContent);
+
+        foreach (var dataElement in doc.Root.Elements("data"))
+        {
+            var name = dataElement.Attribute("name")?.Value;
+            var value = dataElement.Element("value")?.Value;
+
+            if (name != null && value != null)
+                dict[name] = value;
+        }
+
+        return dict;
     }
 
     private static bool TryParseLangCodeFromFileName(string fileName, out string langCode)
@@ -191,21 +225,15 @@ public static class ImportTaskRunner
 
         foreach (var file in files)
         {
-            // 统一当前文件的绝对路径格式
             var currentPath = file.Path.Replace('\\', '/');
 
-            // 2. 检查目录片段是否在绝对路径中 (例如包含 "Assets/Languages")
             if (!currentPath.Contains(directoryPart)) continue;
 
             var currentFileName = Path.GetFileName(currentPath);
 
-            // 3. 验证文件名模式 (例如以 "lang" 开头，以 ".resx" 结尾)
             if (currentFileName.StartsWith(fileNameNoExt, StringComparison.OrdinalIgnoreCase) &&
                 currentFileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
             {
-                // 4. 精细匹配验证：
-                // 确保中间部分要么为空 (lang.resx)，要么是以点号开头的语言代码 (lang.zh-cn.resx)
-                // 避免匹配到 lang_backup.resx 这种文件
                 var middlePart = currentFileName.Substring(
                     fileNameNoExt.Length,
                     currentFileName.Length - fileNameNoExt.Length - extension.Length);
