@@ -1,37 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace SimpleTypedLocalizer.SourceGenerator;
-
-/*
-[ImportLocalizedTextFiles("Assets/Languages/LanguageResource.*.json", ImportType.DumpAsStaticDictionaryInCompileTime)]
-[ImportLocalizedTextFiles("Assets/Languages/LanguageResource.*.resx", ImportType.LoadAsEmbbedResourceInRuntime, NameSpace = "SimpleTypedLocalizer")]
-public class LanguageResource
-{
-    private static readonly LocalizerManager manager;
-
-    static LanguageResource()
-    {
-        manager = new LocalizerManager(new[]
-        {
-            _LocalizedTextProvider_Assets_Languages_LanguageResource_zh_ch_json_.Instance,
-            LocalizedTextProvider.LoadFromEmbbedResource("avares://SimpleTypedLocalizer/Assets/Languages/LanguageResource.jp.resx"),
-            LocalizedTextProvider.LoadFromEmbbedResource("avares://SimpleTypedLocalizer/Assets/Languages/LanguageResource.de.resx")
-        });
-    }
-
-    public static string Name => manager.GetLocalizedText(nameof(Name));
-    public static string ValueDescription => manager.GetLocalizedText(nameof(ValueDescription));
-
-    public static NotifiableLanguageResource Notifiable { get; } = new();
-
-    public class NotifiableLanguageResource
-    {
-        public static ILocalizedTextSource Name => manager.GetLocalizedTextSource(nameof(LanguageResource.Name));
-        public static ILocalizedTextSource ValueDescription => manager.GetLocalizedTextSource(nameof(LanguageResource.ValueDescription));
-    }
-}
-*/
 
 public static class ImportTaskSourceWriter
 {
@@ -45,6 +16,7 @@ public static class ImportTaskSourceWriter
             .AppendLine("using System.Globalization;")
             .AppendLine("using System.Collections.Generic;")
             .AppendLine("using System.CodeDom.Compiler;")
+            .AppendLine("using System.Diagnostics.CodeAnalysis;")
             .AppendLine("using System.Text;")
             .AppendLine("using SimpleTypedLocalizer;")
             .AppendLine();
@@ -76,16 +48,23 @@ public static class ImportTaskSourceWriter
         codeBuilder.AppendLine();
 
         codeBuilder
-            .AppendLine("public static NotifiableLanguageResource Notifiable { get; } = new();")
-            .AppendLine();
-        codeBuilder
             .AppendLine("public static LocalizerManager LocalizerManager => manager;")
             .AppendLine();
 
+        var firstExampleTextName = result.ExportLocalizedTextNames.FirstOrDefault().Key;
         codeBuilder
-            .AppendLine("public class NotifiableLanguageResource")
+            .AppendLine("/// it's nestest class which contains text sources that implement INotifyPropertyChanged and design for data binding")
+            .AppendLine("/// <example><code>")
+            .AppendLine($"/// &lt;TextBlock Text=\"{{Text, Source={{x:Static lang:{context.TargetClassName}.B.{firstExampleTextName}}}}}\"/&gt;")
+            .AppendLine("/// </code></example>");
+
+        codeBuilder
+            .AppendLine("public static class B")
             .AppendLine("{")
-            .IncrementIndent();
+            .IncrementIndent()
+            .AppendLine($"// avoid compiler trim this nested class in AOT.")
+            .AppendLine($"static B(){{LocalizerManager.OnChangedCultureInfo+=()=>{{var _ = {firstExampleTextName}.Text;}};}}")
+            .AppendLine("");
 
         GenerateLocalizedTextProperties(context, result, codeBuilder, true);
 
@@ -155,7 +134,6 @@ public static class ImportTaskSourceWriter
         {
             var typeName = isGenerateTextSource ? "ILocalizedTextSource" : "string";
             var methodName = isGenerateTextSource ? "GetLocalizedTextSource" : "GetLocalizedText";
-            var isStatic = isGenerateTextSource ? "" : "static ";
 
             var textName = pair.Key;
 
@@ -164,21 +142,10 @@ public static class ImportTaskSourceWriter
             codeBuilder.AppendLine("/// <summary>");
             codeBuilder.AppendLine(
                 $"/// get localized text {(isGenerateTextSource ? "source " : "")}named <c>{textName}</c>, default localized value: <c>{textDefaultValue}</c><br/>");
-            if (isGenerateTextSource)
-            {
-                codeBuilder.AppendLine(
-                    "/// it's a text source which implement INotifyPropertyChanged and design for data binding");
-                codeBuilder.AppendLine(
-                    "/// <example><code>");
-                codeBuilder.AppendLine(
-                    $"/// &lt;TextBlock Text=\"{{Text, Source={{x:Static lang:{context.TargetClassName}.Notifiable.{textName}}}}}\"/&gt;");
-                codeBuilder.AppendLine(
-                    "/// </code></example>");
-            }
 
             codeBuilder.AppendLine("/// </summary>");
             codeBuilder.AppendLine(
-                $"public {isStatic}{typeName} {textName} => manager.{methodName}(nameof({textName}));");
+                $"public static {typeName} {textName} => manager.{methodName}(nameof({textName}));");
         }
     }
 

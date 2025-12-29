@@ -116,23 +116,10 @@ public partial class LocalizerManager
 
     public ILocalizedTextSource GetLocalizedTextSource(string resKey)
     {
-        return GetLocalizedTextSource(resKey, CurrentDefaultCultureInfo, true);
-    }
-
-    public ILocalizedTextSource GetLocalizedTextSource(string resKey, CultureInfo specifyCultureInfo,
-        bool failbackInvariantCulture)
-    {
-        var sourceKey = GetSourceKey(resKey, specifyCultureInfo, failbackInvariantCulture);
-
-        if (managedTextSources.TryGetValue(sourceKey, out var source))
+        if (managedTextSources.TryGetValue(resKey, out var source))
             return source;
-        return managedTextSources[sourceKey] = new DefaultLocalizedTextSource(() =>
-            GetLocalizedText(resKey, specifyCultureInfo, failbackInvariantCulture));
-    }
-
-    private string GetSourceKey(string resKey, CultureInfo specifyCultureInfo, bool failbackInvariantCulture)
-    {
-        return $"{specifyCultureInfo.Name}:{resKey}:{failbackInvariantCulture}";
+        return managedTextSources[resKey] = new DefaultLocalizedTextSource(() =>
+            GetLocalizedText(resKey, CurrentDefaultCultureInfo, true));
     }
 
     private void OnOnChangedCultureInfo()

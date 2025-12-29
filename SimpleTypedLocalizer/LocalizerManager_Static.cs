@@ -18,7 +18,7 @@ public partial class LocalizerManager
         }
     }
 
-    private static event Action OnChangedCultureInfo;
+    public static event Action OnChangedCultureInfo;
 
     public static bool TryGetLocalizedStringGlobally(string resKey, CultureInfo specifyCultureInfo, out string localizedString)
     {
