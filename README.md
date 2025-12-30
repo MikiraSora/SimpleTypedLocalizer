@@ -1,6 +1,7 @@
 A simple localization library based on SourceGenerator like resX, I designed it and used it for my own AvaloniaBrowser project.
 
 Features:
+* KISS
 * support AOT and no reflection need
 * reverse out properties from *.resx/*.json though SourceGenerator
 * support INotifyPropertyChanged text property for data binding
