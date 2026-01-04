@@ -52,19 +52,24 @@ public static class ImportTaskSourceWriter
             .AppendLine();
 
         var firstExampleTextName = result.ExportLocalizedTextNames.FirstOrDefault().Key;
-        codeBuilder
-            .AppendLine("/// it's nestest class which contains text sources that implement INotifyPropertyChanged and design for data binding")
-            .AppendLine("/// <example><code>")
-            .AppendLine($"/// &lt;TextBlock Text=\"{{Text, Source={{x:Static lang:{context.TargetClassName}.B.{firstExampleTextName}}}}}\"/&gt;")
-            .AppendLine("/// </code></example>");
+        if (!string.IsNullOrWhiteSpace(firstExampleTextName))
+        {
+            codeBuilder
+                .AppendLine(
+                    "/// it's nestest class which contains text sources that implement INotifyPropertyChanged and design for data binding")
+                .AppendLine("/// <example><code>")
+                .AppendLine(
+                    $"/// &lt;TextBlock Text=\"{{Text, Source={{x:Static lang:{context.TargetClassName}.B.{firstExampleTextName}}}}}\"/&gt;")
+                .AppendLine("/// </code></example>");
 
-        codeBuilder
-            .AppendLine("public static class B")
-            .AppendLine("{")
-            .IncrementIndent()
-            .AppendLine($"// avoid compiler trim this nested class in AOT.")
-            .AppendLine($"static B(){{LocalizerManager.OnChangedCultureInfo+=()=>{{var _ = {firstExampleTextName}.Text;}};}}")
-            .AppendLine("");
+            codeBuilder
+                .AppendLine("public static class B")
+                .AppendLine("{")
+                .IncrementIndent()
+                .AppendLine("// avoid compiler trim this nested class in AOT.")
+                .AppendLine(
+                    $"static B(){{LocalizerManager.OnChangedCultureInfo+=()=>{{var _ = {firstExampleTextName}.Text;}};}}")
+                .AppendLine("");
 
         GenerateLocalizedTextProperties(context, result, codeBuilder, true);
 
@@ -72,6 +77,7 @@ public static class ImportTaskSourceWriter
             .DecrementIndent()
             .AppendLine("}")
             .AppendLine();
+        }
 
         GenerateStaticBuildProviders(result, codeBuilder);
 
