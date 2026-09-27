@@ -16,7 +16,6 @@ public static class ImportTaskSourceWriter
             .AppendLine("using System.Globalization;")
             .AppendLine("using System.Collections.Generic;")
             .AppendLine("using System.CodeDom.Compiler;")
-            .AppendLine("using System.Diagnostics.CodeAnalysis;")
             .AppendLine("using System.Text;")
             .AppendLine("using SimpleTypedLocalizer;")
             .AppendLine();
